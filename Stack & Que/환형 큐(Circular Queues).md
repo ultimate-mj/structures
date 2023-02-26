@@ -1,0 +1,92 @@
+### 큐의 활용
+
+- 자료를 생성하는 작업과 그 자료를 이용하는 작업이 비동기적으로 (asynchronously) 일어나는 경우 (순서대로 일어남)
+- 자료를 생성하는 작업이 여러 곳에서 일어나는 경우 (producer가 둘 이상)
+- 자료를 이용하는 작업이 여러 곳에서 일어나는 경우 (consumer 가 둘 이상)
+- 자료를 생성 & 이용하는 작업이 양쪽 다 여러 곳에서 일어나는 경우
+- 자료를 처리하여 새로운 자료를 생성하고, 나중에 그 자료를 또 처리해야 하는 작업의 경우
+
+네트워크 스케줄링에서 많이 활용, 어려워서 다루지는 않을 것
+
+# 환형 큐
+: 정해진 개수의 저장 공간을 빙 돌려가며 이용
+- 배열로 구현하면 큐의 길이에 비례하는 복잡도를 가지기 때문에 이를 해결하기 위해 환형 큐 활용
+- rear: 데이터를 집어넣는 부분의 포인터
+- front: 데이터를 꺼내는 부분의 포인터
+- 큐가 가득 차면? 더 이상 원소를 넣을 수 없음
+  + 큐 길이를 기억하고 있어야 함
+
+![image](https://user-images.githubusercontent.com/122213470/221411550-66ae3b25-daf0-4b93-8678-c5ca92396500.png)
+![image](https://user-images.githubusercontent.com/122213470/221411594-15d573fd-30c1-4b0d-9cd1-32b4ea531aac.png)
+![image](https://user-images.githubusercontent.com/122213470/221411606-3f8a020f-81b1-4605-a966-f4c35b651749.png)
+![image](https://user-images.githubusercontent.com/122213470/221411663-95b47a48-c4eb-4862-8035-cac4378f8015.png)
+
+
+## 환형 큐의 추상적 자료구조 구현
+
+### 연산의 정의
+
+- size(): 현재 큐에 들어있는 데이터 원소의 수를 구함
+- isEmpty(): 현재 큐가 비어 있는지를 판단
+- isFull(): 큐에 데이터 원소가 꽉 차 있는지를 판단 **얘만 추가됨**
+- enqueue(x): 데이터 원소 x를 큐에 추가  (스택의 push에 대응)
+- dequeue(): 큐의 맨 앞에 저장된 데이터 원소를 제거 (또한, 반환)  (스택의 pop에 대응)
+- peek(): 큐의 맨 앞에 저장된 데이터 원소를 반환 (제거하지 않음)
+
+### 배열로 구현한 환형 큐
+
+핵심: front와 rear를 절적히 계산하여 배열을 환형으로 재활용
+
+- 정해진 길이 n 의 리스트를 확보해 두고
+- `Q.enqueue(A)`
+- rear가 A를 가리키도록
+- `Q.enqueue(B)`, rear가 B를 가리키도록
+
+- `r1 = Q.dequeue()` (front가 A를 가리키므로 A가 나옴)
+- `r2 = Q.dequeue()` front가 B를 가리키도록 하고 B를 뺌
+- `Q.enqueue(E)`, `Q.enqueue(F)`
+- `Q.enqueue(G)`를 하면 rear가 0번째 index이기 때문에 제일 앞에 들어감
+
+![image](https://user-images.githubusercontent.com/122213470/221440313-7c881b41-cccb-4248-8aa2-1aa75bb26255.png)
+
+
+```python
+class CircularQueue:
+    def __init__(self, n):
+        self.maxCount = n   #인자로 주어진 최대 큐 길이 설정
+        self.data = [None]*n   #실제 값을 넣으려는 리스트
+        self.count = 0
+        self.front = -1  #이렇게 해야 나중에 편해짐
+        self.rear = -1
+        
+    def size(self):  #현재 큐 길이 반환
+        return self.count
+    
+    def isEmpty(self):
+        return self.count == 0
+    
+    def isFull(self):
+        return self.count == self.maxCount
+    
+    def enqueue(self, x): #연습문제
+        if self.isFull():
+            raise IndexError('Queue full') 
+        self.rear = (self.rear+1) % self.maxCount
+        self.data[self.rear] = x
+        self.count += 1
+        
+    def dequeue(self): #연습문제
+        if self.isEmpty():
+            raise IndexError('Queue empty')
+        self.front = (self.front+1) % self.maxCount
+        x = self.data[self.front]
+        self.count -= 1
+        return x
+    
+    def peek(self):
+        if self.isEmpty():
+            raise IndexError('Queue empty')
+        return self.data[(self.front+1) % self.maxCount]
+```
+
+
